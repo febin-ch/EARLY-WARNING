@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Locator - BEACON</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+    <style>
+        body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5); /* White background with 50% opacity */
+    color: rgb(0, 0, 0);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+        #map {
+            height: 100vh;
+            width: 100%;
+            background-color: white;
+        }
+
+        .hospital-list {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            color: #fff;
+            z-index: 1000;
+            text-align: left;
+            transition: transform 0.3s ease, right 0.3s ease;
+        }
+
+        .hospital-list.hidden {
+            transform: translateX(100%);
+            right: -320px;
+        }
+
+        .hospital-list h3 {
+            margin-top: 0;
+        }
+
+        .hospital-list ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .hospital-list li {
+            margin-bottom: 10px;
+        }
+
+        .manual-input {
+            margin-top: 20px;
+        }
+
+        .manual-input input {
+            width: calc(100% - 40px);
+            padding: 5px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .manual-input button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+
+        .manual-input button:hover {
+            background-color: #218838;
+        }
+
+        .previous-hospitals {
+            margin-top: 20px;
+        }
+
+        .previous-hospitals h4 {
+            margin-top: 0;
+        }
+
+        .clear-button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #dc3545;
+            color: rgb(0, 0, 0);
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .clear-button:hover {
+            background-color: #c82333;
+        }
+
+        .notification-button {
+            position: fixed;
+            right: -60px;
+            top: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: right 0.3s ease;
+            z-index: 1001;
+        }
+
+        .notification-button.show {
+            right: 10px;
+        }
+
+        .toggle-button {
+            position: absolute;
+            top: 10px;
+            right: 320px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: right 0.3s ease;
+        }
+
+        .toggle-button:hover {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <button class="toggle-button" id="toggleButton"><i class="fas fa-chevron-left"></i></button>
+    
+    <div class="hospital-list" id="hospitalList">
+        <h3>Nearby Locations</h3>
+        <ul id="hospitalResults"></ul>
+        
+        <div class="manual-input">
+            <input type="text" id="manualHospitalName" placeholder="Enter Location name">
+            <button id="addHospitalButton">Add Location</button>
+        </div>
+
+        <div class="previous-hospitals">
+            <h4>Previously Entered Locations</h4>
+            <ul id="previousHospitalResults"></ul>
+            <button class="clear-button" id="clearHospitalsButton">Clear All Locations</button>
+        </div>
+    </div>
+
+    <button class="notification-button" id="notificationButton"><i class="fas fa-bell"></i></button>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script>
+        let map, userMarker, hospitalIcon, userLocation, routeControl, newHospitalMarker;
+
+        function initMap() {
+            const keralaLocation = [10.8505, 76.2711];
+            map = L.map('map').setView(keralaLocation, 7);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+            }).addTo(map);
+
+            userMarker = L.marker(keralaLocation).addTo(map);
+
+            hospitalIcon = L.icon({
+                iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Map_marker_icon_%E2%80%93_Nicolas_Mollet_%E2%80%93_Hospital_%E2%80%93_Healthcare_%E2%80%93_Default.png',
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+            });
+
+            map.on('click', (e) => {
+                if (newHospitalMarker) {
+                    map.removeLayer(newHospitalMarker);
+                }
+
+                // Define the hospital name and location details
+                const hospitalName = "Default Hospital Name";
+                const hospitalLat = e.latlng.lat;
+                const hospitalLng = e.latlng.lng;
+
+                // Add a new marker with predefined name
+                newHospitalMarker = L.marker([hospitalLat, hospitalLng], { icon: hospitalIcon }).addTo(map);
+                newHospitalMarker.bindPopup(hospitalName).openPopup();
+
+                // Save to local storage
+                saveHospital(hospitalName, hospitalLat, hospitalLng);
+
+                // Add to previously entered locations list
+                const li = document.createElement('li');
+                li.textContent = hospitalName;
+                document.getElementById('previousHospitalResults').appendChild(li);
+
+                // Update the route
+                if (routeControl) map.removeControl(routeControl);
+                routeControl = L.Routing.control({
+                    waypoints: [
+                        L.latLng(userLocation),
+                        L.latLng(hospitalLat, hospitalLng)
+                    ],
+                    routeWhileDragging: true
+                }).addTo(map);
+            });
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLocation = [position.coords.latitude, position.coords.longitude];
+                        map.setView(userLocation, 13);
+                        userMarker.setLatLng(userLocation).bindPopup("You are here!").openPopup();
+
+                        fetch(`https://api.foursquare.com/v3/places/search?query=hospital&ll=${position.coords.latitude},${position.coords.longitude}&limit=50`, {
+                            headers: {
+                                'Authorization': 'YOUR_FOURSQUARE_API_KEY'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            const hospitalResults = document.getElementById('hospitalResults');
+                            hospitalResults.innerHTML = '';
+                            data.results
+                                .filter(place => place.name.toLowerCase().includes("hospital"))
+                                .forEach(hospital => {
+                                    const li = document.createElement('li');
+                                    li.textContent = hospital.name;
+                                    hospitalResults.appendChild(li);
+
+                                    L.marker([hospital.geocodes.main.latitude, hospital.geocodes.main.longitude], { icon: hospitalIcon })
+                                        .addTo(map)
+                                        .bindPopup(hospital.name);
+                                });
+
+                            // Load manually added hospitals from localStorage
+                            loadManualHospitals();
+                        })
+                        .catch(error => {
+                            console.error('Error fetching hospitals:', error);
+                        });
+                    },
+                    () => {
+                        handleLocationError(true, map.getCenter());
+                    }
+                );
+            } else {
+                handleLocationError(false, map.getCenter());
+            }
+        }
+
+        function handleLocationError(browserHasGeolocation, pos) {
+            alert(browserHasGeolocation
+                ? "Error: The Geolocation service failed."
+                : "Error: Your browser doesn't support geolocation.");
+        }
+
+        function saveHospital(hospitalName, lat, lng) {
+            let hospitals = JSON.parse(localStorage.getItem('manualHospitals')) || [];
+            hospitals.push({ name: hospitalName, lat: lat, lng: lng });
+            localStorage.setItem('manualHospitals', JSON.stringify(hospitals));
+        }
+
+        function loadManualHospitals() {
+            const hospitals = JSON.parse(localStorage.getItem('manualHospitals')) || [];
+            const previousHospitalResults = document.getElementById('previousHospitalResults');
+            previousHospitalResults.innerHTML = ''; // Clear existing entries
+            hospitals.forEach(hospital => {
+                const li = document.createElement('li');
+                li.textContent = hospital.name;
+                previousHospitalResults.appendChild(li);
+
+                // Add marker for the previously entered hospital
+                const marker = L.marker([hospital.lat, hospital.lng], { icon: hospitalIcon }).addTo(map);
+                marker.bindPopup(hospital.name);
+
+                // Add routing to previously entered hospital
+                if (routeControl) map.removeControl(routeControl);
+                routeControl = L.Routing.control({
+                    waypoints: [
+                        L.latLng(userLocation),
+                        L.latLng(hospital.lat, hospital.lng)
+                    ],
+                    routeWhileDragging: true
+                }).addTo(map);
+            });
+        }
+
+        function clearHospitals() {
+            localStorage.removeItem('manualHospitals');
+            loadManualHospitals(); // Refresh the displayed list
+        }
+
+        document.addEventListener('DOMContentLoaded', loadManualHospitals);
+
+        document.getElementById('addHospitalButton').addEventListener('click', function() {
+            const hospitalName = document.getElementById('manualHospitalName').value.trim();
+            if (hospitalName && userLocation) {
+                const hospitalLat = userLocation[0] + (Math.random() - 0.5) * 0.1;
+                const hospitalLng = userLocation[1] + (Math.random() - 0.5) * 0.1;
+                saveHospital(hospitalName, hospitalLat, hospitalLng);
+
+                const li = document.createElement('li');
+                li.textContent = hospitalName;
+                document.getElementById('previousHospitalResults').appendChild(li);
+
+                L.marker([hospitalLat, hospitalLng], { icon: hospitalIcon })
+                    .addTo(map)
+                    .bindPopup(hospitalName);
+
+                // Update the route
+                if (routeControl) map.removeControl(routeControl);
+                routeControl = L.Routing.control({
+                    waypoints: [
+                        L.latLng(userLocation),
+                        L.latLng(hospitalLat, hospitalLng)
+                    ],
+                    routeWhileDragging: true
+                }).addTo(map);
+            }
+        });
+
+        document.getElementById('clearHospitalsButton').addEventListener('click', clearHospitals);
+
+        // Notification button logic
+        const notificationButton = document.getElementById('notificationButton');
+        let isNotificationVisible = false;
+
+        notificationButton.addEventListener('click', () => {
+            isNotificationVisible = !isNotificationVisible;
+            if (isNotificationVisible) {
+                notificationButton.classList.add('show');
+            } else {
+                notificationButton.classList.remove('show');
+            }
+        });
+
+        // Toggle button logic
+        const toggleButton = document.getElementById('toggleButton');
+        let isHospitalListVisible = true;
+
+        toggleButton.addEventListener('click', () => {
+            isHospitalListVisible = !isHospitalListVisible;
+            const hospitalList = document.getElementById('hospitalList');
+            if (isHospitalListVisible) {
+                hospitalList.classList.remove('hidden');
+                toggleButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            } else {
+                hospitalList.classList.add('hidden');
+                toggleButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            }
+        });
+
+        initMap();
+    </script>
+</body>
+</html>

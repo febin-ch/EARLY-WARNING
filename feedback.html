@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Feedback</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            padding: 2rem;
+        }
+        .feedback-item {
+            background-color: #1e1e1e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+        }
+        .feedback-item strong {
+            color: #ff5733;
+        }
+        .feedback-item small {
+            display: block;
+            color: #bbb;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Feedback</h1>
+    <div id="feedback-container">
+        <!-- Feedback items will be inserted here by JavaScript -->
+    </div>
+
+    <script>
+        window.onload = function() {
+            const feedbackContainer = document.getElementById('feedback-container');
+            const feedback = JSON.parse(localStorage.getItem('feedback')) || [];
+
+            feedback.forEach(fb => {
+                const feedbackElement = document.createElement('div');
+                feedbackElement.classList.add('feedback-item');
+                feedbackElement.innerHTML = `
+                    <strong>${fb.name}:</strong> ${fb.message}<br>
+                    <small>${fb.date}</small>
+                `;
+                feedbackContainer.appendChild(feedbackElement);
+            });
+        };
+    </script>
+</body>
+</html>

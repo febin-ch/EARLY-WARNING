@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map - BEACON</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            height: 50vh;
+            width: 100%;
+            border-radius: 15%;
+            background-color: white;
+        }
+
+        .form-container {
+            position: absolute;
+            top: 75%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .form-container input, .form-container button, .form-container .icon-button {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            box-sizing: border-box;
+            text-align: center;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .form-container input {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .form-container button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .icon-button {
+            background-color: #28a745;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .icon-button i {
+            font-size: 24px;
+        }
+
+        .icon-button:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Pulse animation for the circle */
+        .pulsing-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            animation: pulse-animation 1.5s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.2;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    
+    <div id="map"></div>
+
+    <div class="form-container">
+        <h2>Your Location Details</h2>
+        <form id="locationForm">
+            <input type="text" id="latitude" name="latitude" placeholder="Latitude" readonly />
+            <input type="text" id="longitude" name="longitude" placeholder="Longitude" readonly />
+            <input type="text" id="placeName" name="placeName" placeholder="Place Name" readonly />
+            <button type="submit">Submit</button>
+            <button type="button" class="icon-button" id="weatherIcon">
+                <i class="fas fa-cloud-sun"></i>
+            </button>
+        </form>
+        <div class="success-message" id="successMessage">SUCCESSFULLY SUBMITTED</div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        function initMap() {
+            const keralaLocation = [10.8505, 76.2711];
+            const map = L.map('map').setView(keralaLocation, 7);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+            }).addTo(map);
+
+            const marker = L.marker(keralaLocation).addTo(map);
+
+            // Add pulsing circle
+            const radiusInMeters = 10;
+            L.circle(keralaLocation, {
+                color: '#00FF00',
+                fillColor: '#00FF00',
+                fillOpacity: 0.2,
+                radius: radiusInMeters
+            }).addTo(map);
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLocation = [position.coords.latitude, position.coords.longitude];
+                        map.setView(userLocation, 13);
+                        marker.setLatLng(userLocation).bindPopup("You are here!").openPopup();
+
+                        // Fill out the form with user's location details
+                        document.getElementById('latitude').value = position.coords.latitude;
+                        document.getElementById('longitude').value = position.coords.longitude;
+
+                        // Fetch place name using reverse geocoding
+                        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`)
+                            .then(response => response.json())
+                            .then(data => {
+                                document.getElementById('placeName').value = data.display_name || 'Unknown location';
+                            })
+                            .catch(() => {
+                                document.getElementById('placeName').value = 'Error fetching location name';
+                            });
+                    },
+                    () => {
+                        handleLocationError(true, map.getCenter());
+                    }
+                );
+            } else {
+                handleLocationError(false, map.getCenter());
+            }
+        }
+
+        function handleLocationError(browserHasGeolocation, pos) {
+            alert(browserHasGeolocation
+                ? "Error: The Geolocation service failed."
+                : "Error: Your browser doesn't support geolocation.");
+        }
+
+        // Event listener for form submission
+        document.getElementById('locationForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+
+            // Set a flag in localStorage to trigger the alert on the dashboard pages
+            localStorage.setItem('locationSubmitted', 'true');
+
+            // Show success message
+            document.getElementById('successMessage').style.display = 'block';
+
+            // Redirect to index.html after 2 seconds
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000); // Adjust the time if needed
+        });
+
+        // Event listener for the icon button click
+        document.getElementById('weatherIcon').addEventListener('click', function() {
+            window.location.href = 'https://openweathermap.org/city/1278602'; // Redirect to the specified weather page
+        });
+
+        initMap();
+    </script>
+
+</body>
+
+</html>

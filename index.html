@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEACON - Citizen Alert System</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden; /* Hide overflow to avoid scrollbars */
+            position: relative;
+            color: #e0e0e0; /* Light text color for contrast */
+            background: linear-gradient(135deg, rgb(0, 0, 0), rgb(54, 52, 52));
+            background-size: 400% 400%;
+            animation: gradientAnimation 15s ease infinite; /* Apply the gradient animation */
+        }
+
+        @keyframes gradientAnimation {
+            0% {
+                background-position: 0% 0%;
+            }
+            50% {
+                background-position: 100% 100%;
+            }
+            100% {
+                background-position: 0% 0%;
+            }
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            transition: background-color 0.3s ease;
+        }
+
+        .navbar img {
+            height: 80px; 
+            margin-right: auto; /* Align logo to the left */
+        }
+
+        .navbar .nav-links {
+            display: flex;
+            gap: 10px; /* Space between nav items */
+            margin-left: auto; /* Move nav items to the right */
+            position: relative;
+        }
+
+        .navbar a {
+            text-decoration: none;
+            color: #e0e0e0;
+        }
+
+        #hover-area, #map-area {
+            position: relative;
+            width: 100px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e0e0e0;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #map-area:hover {
+            background-color: rgba(74, 255, 61, 0.4);
+            transform: scale(1.1);
+        }
+        
+        #hover-area:hover {
+            background-color: rgba(220, 111, 23, 0.885);
+            transform: scale(1.1);
+        }
+
+        #beacon {
+            position: absolute;
+            font-size: 80px;
+            font-weight: bold;
+            color: rgb(255, 255, 255);
+            text-align: center;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 
+                         0 0 20px rgba(255, 255, 255, 0.6), 
+                         0 0 30px rgba(255, 255, 255, 0.4);
+        }
+
+        #beacon:hover {
+            text-shadow: 0 0 20px rgba(255, 255, 255, 1), 
+                         0 0 30px rgba(255, 255, 255, 0.8), 
+                         0 0 40px rgba(255, 255, 255, 0.6);
+        }
+
+        #alert-icon {
+            position: absolute; 
+            font-size: 50px;
+            font-weight: bold;
+            color: rgb(255, 69, 58); /* Alert icon color */
+            text-align: center;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid rgba(255, 69, 58, 0.8); /* Border color and thickness */
+            border-radius: 10px; /* Rounded corners for the border */
+            padding: 10px; /* Space between text and border */
+            box-sizing: border-box; /* Ensure padding is included in element's total width and height */
+        }
+
+        #alert-icon:hover {
+            text-shadow: 0 0 10px rgba(255, 69, 58, 0.8), 
+                         0 0 20px rgba(255, 69, 58, 0.6), 
+                         0 0 30px rgba(255, 69, 58, 0.4);
+            border-color: rgba(255, 69, 58, 1); /* Change border color on hover */
+        }
+
+        .alert-list {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            flex-direction: column;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            width: 200px;
+            z-index: 1002;
+        }
+
+        .alert-list a {
+            color: #e0e0e0;
+            padding: 10px;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .alert-list a:hover {
+            background-color: rgba(255, 69, 58, 0.6);
+        }
+
+        .description {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transform: translateY(50px); /* Start below the initial position */
+            transition: opacity 0.5s ease, max-height 0.5s ease, transform 0.5s ease;
+            position: absolute;
+            top: calc(35% + 100px); /* Position below the BEACON heading */
+            left: 50%;
+            transform: translate(-50%, 50px); /* Keep below the heading until hover */
+            color: #e0e0e0;
+            font-size: 16px;
+            line-height: 1.5;
+            text-align: center;
+            width: 80%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 1001;
+            border-radius: 10px;
+        }
+
+        #beacon:hover + .description {
+            opacity: 1;
+            max-height: 500px;
+            transform: translate(-50%, 0); /* Move to its final position */
+        }
+
+        footer {
+            position: absolute;
+            height: 40px;
+            bottom: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #e0e0e0;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        footer h3 {
+            margin: 0 0 10px 0;
+        }
+
+        footer .members {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        footer .members li {
+            margin: 5px 0;
+        }
+
+        /* Dropdown Menu Styles */
+        .dropdown {
+            position: absolute;
+            top: 60px; /* Adjust based on navbar height */
+            right: 60px;
+            display: none;
+            flex-direction: column;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+        }
+
+        .dropdown a {
+            color: #e0e0e0;
+            padding: 10px;
+            text-decoration: none;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dropdown a:hover {
+            background-color: rgba(220, 111, 23, 0.885);
+        }
+
+        .dropdown a:last-child {
+            border-bottom: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <!---image logo-->
+        <div class="nav-links">
+            <a href="#" id="login-icon">
+                <div id="hover-area">Login</div>
+            </a>
+            <a href="map.html">
+                <div id="map-area">Map</div>
+            </a>
+            <!-- Dropdown Menu -->
+            <div class="dropdown" id="login-dropdown">
+                <a href="login.html">User Login</a> <!-- Updated link for User Login -->
+                <a href="admin.html">Admin Login</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="beacon">BEACON</div>
+    <div class="description">
+        <h2>BEACON Citizen Alert System</h2>
+        <p>
+            The BEACON Citizen Alert System website is a responsive and dynamic platform designed to provide critical 
+            alerts and updates to citizens. Its modern interface features a sleek, animated background that transitions 
+            smoothly, giving the site a dynamic and engaging look.<br><br>
+
+            At the top, a fixed navigation bar provides access to two key sections: Login and Map. These buttons are 
+            designed with attractive gradient backgrounds, smooth hover animations, and subtle elevation effects, 
+            creating an intuitive and visually appealing experience.<br><br>
+
+            The Login section directs users to a secure login page where they can authenticate and access personalized 
+            alerts. The Map section opens an interactive map showing real-time geolocation information, allowing users 
+            to identify their location and view important notifications related to their area.<br><br>
+
+            The homepage prominently displays the BEACON title in large, bold text with a hover effect that reveals a 
+            description of the system, giving users a quick understanding of the website's purpose. This layout is 
+            optimized for a seamless user experience, combining utility with a clean, modern design to ensure citizens 
+            can easily stay informed about potential hazards or emergencies in their region.
+        </p>
+    </div>
+
+    <div id="alert-icon">ALERT</div> <!-- Alert icon -->
+
+    <div class="alert-list" id="alertList">
+        <a href="map.html">Weather Alerts</a>
+        <a href="map.html">Traffic Alerts</a>
+        <a href="map.html">Emergency Alerts</a>
+        <a href="map.html">Community Notices</a>
+    </div>
+
+    <script>
+        
+        document.getElementById('alert-icon').addEventListener('click', function() {
+            var alertList = document.getElementById('alertList');
+            if (alertList.style.display === 'none' || alertList.style.display === '') {
+                alertList.style.display = 'flex';
+            } else {
+                alertList.style.display = 'none';
+            }
+        });
+
+        
+        document.getElementById('login-icon').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default link behavior
+            var dropdown = document.getElementById('login-dropdown');
+            if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+                dropdown.style.display = 'flex';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        
+        window.addEventListener('click', function(event) {
+            var dropdown = document.getElementById('login-dropdown');
+            var loginIcon = document.getElementById('login-icon');
+            if (!dropdown.contains(event.target) && !loginIcon.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    </script>
+
+    <footer>
+        <h3><u>Contact Us:</u></h3>
+        <p>+918590312627</p>
+        <h3><u>Members List:</u></h3>
+        <ul class="members">
+            <li>Febin Cheriyan</li>
+            <li>Fathima N</li>
+            <li>Haby S Mathew</li>
+            <li>Joel Gijo</li>
+            <li>K Ryan George</li>
+        </ul>
+    </footer>
+
+</body>
+</html>

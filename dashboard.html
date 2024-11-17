@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Alert Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212; /* Dark background */
+            color: #e0e0e0;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            padding-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .sidebar h2 {
+            margin-left: 1.5rem;
+            font-size: 1.5rem;
+            color: #ff5733; /* Vibrant red */
+        }
+
+        .sidebar a {
+            color: #e0e0e0;
+            text-decoration: none;
+            padding: 1rem;
+            display: block;
+            margin: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #333;
+            color: #ff5733;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 1rem 1.5rem;
+            position: fixed;
+            top: 0;
+            left: 250px; /* Sidebar width */
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #f1f1f1; /* Light grey font color for contrast */
+            text-shadow: 0 0 5px #b0b0b0;
+        }
+
+        .search-bar {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .search-bar input {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background: #222;
+            color: #e0e0e0;
+            width: 100%;
+            max-width: 600px; /* Wider search bar */
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .user-profile img {
+            border-radius: 50%;
+            width: 40px; /* User icon size */
+            height: 40px;
+            border: 2px solid #ff5733;
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: #ff5733;
+            margin-left: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .notification-icon.blink {
+            animation: move 1s ease-in-out infinite;
+        }
+
+        @keyframes move {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #e65c00;
+            color: white;
+            border-radius: 50%;
+            padding: 3px 7px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .notification-box {
+            position: absolute;
+            top: 50px; /* Adjust based on your layout */
+            right: 0;
+            width: 250px; /* Adjust width as needed */
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            display: none; /* Hidden by default */
+            padding: 1rem;
+            z-index: 2000;
+            max-height: 300px; /* Adjust height as needed */
+            overflow-y: auto; /* Scroll if content overflows */
+        }
+
+        .notification-box h3 {
+            margin-top: 0;
+            color: #ff5733; /* Vibrant red */
+        }
+
+        .notification-item {
+            background-color: #333;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0% { background-color: #333; color: #e0e0e0; }
+            50% { background-color: #ff0000; color: #ffffff; } /* Red background with white text */
+            100% { background-color: #333; color: #e0e0e0; }
+        }
+
+        .notification-item:last-child {
+            margin-bottom: 0;
+        }
+
+        main {
+            margin: 5rem 1rem 2rem 270px; /* Adjust for sidebar and header */
+            padding: 1rem;
+            max-width: calc(100% - 270px); /* Adjust for sidebar width */
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .section {
+            padding: 2rem;
+            background: rgba(50, 50, 50, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            animation: fadeIn 1s ease-in-out;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section h2 {
+            margin-top: 0;
+            color: #ff5733; /* Vibrant red */
+            font-size: 1.5rem;
+        }
+
+        #alert-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .news-ticker {
+            overflow: hidden;
+            white-space: nowrap;
+            background-color: #ffcc00; /* Bright yellow for the ticker background */
+            padding: 0.5rem;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .ticker-content {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 15s linear infinite;
+        }
+
+        .ticker-item {
+            display: inline-block;
+            padding: 0 2rem;
+            font-weight: bold;
+            color: #000; /* Black text for better readability */
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .resource-card {
+            background-color: #333;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-5px);
+            background-color: #444;
+        }
+
+        .resource-card h3 {
+            color: #ff5733; /* Vibrant red */
+        }
+
+        .resource-card a {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #ff5733; /* Vibrant red */
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .resource-card a:hover {
+            color: #e04e31; /* Darker red */
+        }
+
+        form {
+            display: grid;
+            gap: 1rem;
+        }
+
+        label {
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background: #222;
+            color: #e0e0e0;
+        }
+
+        button {
+            padding: 0.75rem;
+            border-radius: 4px;
+            border: none;
+            background-color: #ff5733;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #e04e31; /* Darker red */
+            transform: translateY(-2px);
+        }
+
+        .submit-button {
+            background-color: #ff5733; /* Vibrant red */
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-button:hover {
+            background-color: #ff0000; /* Bright red on hover */
+        }
+
+        .profile-menu {
+            display: none;
+            position: absolute;
+            top: 50px; /* Adjust based on your layout */
+            right: 0;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            padding: 1rem;
+            z-index: 2000;
+        }
+
+        .profile-menu a {
+            display: block;
+            color: #ff5733;
+            text-decoration: none;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .profile-menu a:hover {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>BEACON Dashboard</h2>
+        <a href="#">Home</a>
+        <a href="#">Emergency Alerts</a>
+        <a href="#">Resources</a>
+        <a href="#">Profile</a>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <h1>Emergency Alert Dashboard</h1>
+        <div class="search-bar">
+            <input type="text" placeholder="Search...">
+        </div>
+        <div class="user-profile">
+            <i class="fas fa-bell notification-icon" id="notificationIcon"></i>
+            <div id="notificationBox" class="notification-box">
+                <h3>Notifications</h3>
+                <div id="notificationList"></div>
+            </div>
+            <img src="https://imgs.search.brave.com/Tso5b-lOgqvrXcfgrknvzs0lqGmW_rXIwHjY3nkCBFI/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9mcmVl/c3ZnLm9yZy9pbWcv/YWJzdHJhY3QtdXNl/ci1mbGF0LTQucG5n" alt="User Profile Picture" id="profileIcon">
+            <div id="profileMenu" class="profile-menu">
+                <a href="profile.html">User Profile</a>
+                <a href="index.html">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="section">
+            <h2>Active Emergency Alerts</h2>
+            <div id="alert-container">
+                <div class="news-ticker">
+                    <div class="ticker-content" id="alertNewsTicker"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Emergency Resources</h2>
+            <div class="resource-grid">
+                <!-- Resource Cards -->
+                <div class="resource-card">
+                    <h3>Hospitals Nearby</h3>
+                    <p>Locate hospitals near your area.</p>
+                    <a href="hospital.html">View More</a>
+                </div>
+                <div class="resource-card">
+                    <h3>Police Nearby</h3>
+                    <p>Find emergency contact numbers.</p>
+                    <a href="hospital.html">View More</a>
+                </div>
+                <div class="resource-card">
+                    <h3>Fire Station</h3>
+                    <p>Learn what to do during an emergency.</p>
+                    <a href="hospital.html">View More</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Register for Alerts</h2>
+            <form id="alertForm">
+                <label for="alertName">Name</label>
+                <input type="text" id="alertName" name="alertName">
+
+                <label for="alertEmail">Email</label>
+                <input type="email" id="alertEmail" name="alertEmail">
+
+                <label for="alertPhone">Phone</label>
+                <input type="text" id="alertPhone" name="alertPhone">
+
+                <button type="submit" class="submit-button" id="submitButton">Submit</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const notificationIcon = document.getElementById('notificationIcon');
+        const notificationBox = document.getElementById('notificationBox');
+        const notificationList = document.getElementById('notificationList');
+        const profileIcon = document.getElementById('profileIcon');
+        const profileMenu = document.getElementById('profileMenu');
+
+        const alerts = [
+            { id: 1, message: 'Flood warning in your area' },
+            { id: 2, message: 'Severe weather alert: Heavy rainfall expected' },
+            { id: 3, message: 'Evacuation notice: Coastal areas' }
+        ];
+
+        const displayNotifications = () => {
+            notificationList.innerHTML = ''; // Clear existing notifications
+            alerts.forEach(alert => {
+                const notificationItem = document.createElement('div');
+                notificationItem.classList.add('notification-item');
+                notificationItem.textContent = alert.message;
+                notificationList.appendChild(notificationItem);
+            });
+            notificationBox.style.display = 'block'; // Show notification box
+        };
+
+        notificationIcon.addEventListener('click', () => {
+            const isBoxVisible = notificationBox.style.display === 'block';
+            notificationBox.style.display = isBoxVisible ? 'none' : 'block';
+            notificationIcon.classList.toggle('blink', !isBoxVisible);
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!notificationBox.contains(event.target) && !notificationIcon.contains(event.target)) {
+                notificationBox.style.display = 'none';
+                notificationIcon.classList.remove('blink');
+            }
+            if (!profileMenu.contains(event.target) && !profileIcon.contains(event.target)) {
+                profileMenu.style.display = 'none';
+            }
+        });
+
+        profileIcon.addEventListener('click', () => {
+            const isMenuVisible = profileMenu.style.display === 'block';
+            profileMenu.style.display = isMenuVisible ? 'none' : 'block';
+        });
+
+        // Show number of notifications
+        const notificationBadge = document.createElement('span');
+        notificationBadge.classList.add('notification-badge');
+        notificationBadge.textContent = alerts.length;
+        notificationIcon.appendChild(notificationBadge);
+
+        const alertForm = document.getElementById('alertForm');
+        alertForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const alertName = document.getElementById('alertName').value;
+            const alertEmail = document.getElementById('alertEmail').value;
+            const alertPhone = document.getElementById('alertPhone').value;
+
+            if (alertName && alertEmail && alertPhone) {
+                const newAlert = {
+                    id: alerts.length + 1,
+                    message: `New alert for ${alertName} - Check your email or phone for details.`,
+                    name: alertName,
+                    email: alertEmail,
+                    phone: alertPhone,
+                    timestamp: new Date().toISOString()
+                };
+
+                alerts.push(newAlert);
+                displayNotifications();
+                saveAlertsToLocalStorage();
+                alertForm.reset();
+            }
+        });
+
+        const saveAlertsToLocalStorage = () => {
+            localStorage.setItem('alerts', JSON.stringify(alerts));
+        };
+
+        const alertNewsTicker = document.getElementById('alertNewsTicker');
+        alerts.forEach(alert => {
+            const tickerItem = document.createElement('div');
+            tickerItem.classList.add('ticker-item');
+            tickerItem.textContent = alert.message;
+            alertNewsTicker.appendChild(tickerItem);
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+        const alerts = JSON.parse(localStorage.getItem('alerts')) || [];
+        displayAlerts(alerts);
+    });
+
+    const displayAlerts = (alerts) => {
+        console.log('Alerts:', alerts);
+        const alertNewsTicker = document.getElementById('alertNewsTicker');
+        alertNewsTicker.innerHTML = ''; // Clear existing ticker items
+
+        alerts.forEach(alert => {
+            const tickerItem = document.createElement('div');
+            tickerItem.classList.add('ticker-item');
+            tickerItem.textContent = alert.message;
+            alertNewsTicker.appendChild(tickerItem);
+        });
+    };
+
+    </script>
+
+</body>
+</html>

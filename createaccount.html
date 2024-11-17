@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - BEACON</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, rgb(0, 0, 0), rgb(46, 46, 46));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: backgroundAnimation 5s ease infinite;
+        }
+
+        .beacon-heading {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff5733;
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff5733;
+            z-index: 10;
+        }
+
+        .create-account-container {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 350px;
+            text-align: center;
+        }
+
+        .create-account-container h2 {
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 28px;
+        }
+
+        .create-account-container input[type="text"], 
+        .create-account-container input[type="email"], 
+        .create-account-container input[type="password"], 
+        .create-account-container input[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: none;
+            box-sizing: border-box;
+        }
+
+        .create-account-container input[type="text"]:focus, 
+        .create-account-container input[type="email"]:focus, 
+        .create-account-container input[type="password"]:focus {
+            outline: none;
+            box-shadow: 0 0 10px #ff5733;
+        }
+
+        .create-account-container input[type="submit"] {
+            background-color: #ff5733;
+            color: white;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .create-account-container input[type="submit"]:hover {
+            background-color: #ff6e7f;
+        }
+
+        .create-account-container a {
+            display: inline-block;
+            margin-top: 10px;
+            color: #ff5733;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .create-account-container a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="beacon-heading">BEACON</div>
+
+    <div class="create-account-container">
+        <h2>Create Account</h2>
+        <form id="createAccountForm">
+            <input type="text" id="fullName" name="fullName" placeholder="Full Name" required>
+            <input type="email" id="email" name="email" placeholder="Email" required>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <input type="submit" value="Create Account">
+            <a href="login.html">Back to Login</a> <!-- Link to login page -->
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('createAccountForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // In a real application, you would handle form submission here
+            alert(`Account created for ${fullName}!`);
+            window.location.href = "login.html"; // Redirect to login page after account creation
+        });
+    </script>
+
+</body>
+</html>

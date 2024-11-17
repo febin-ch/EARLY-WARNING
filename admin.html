@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BEACON</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, rgb(0, 0, 0), rgb(54, 52, 52));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: gradientAnimation 15s ease infinite;
+        }
+
+        .beacon-heading {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff5733;
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff5733;
+            z-index: 10;
+        }
+
+        .login-container {
+            background: rgba(70, 70, 70, 0.7); /* Darker and half-transparent background */
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 350px;
+            text-align: center;
+        }
+
+        .login-container h2 {
+            margin-bottom: 30px;
+            color: #e0e0e0; /* Light text color */
+            font-size: 28px;
+        }
+
+        .login-container input[type="text"], 
+        .login-container input[type="password"], 
+        .login-container input[type="submit"], 
+        .login-container a, 
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: none;
+            box-sizing: border-box;
+            transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animation properties */
+        }
+
+        .login-container input[type="text"]:focus, 
+        .login-container input[type="password"]:focus {
+            outline: none;
+            box-shadow: 0 0 10px #ff5733;
+        }
+
+        .login-container input[type="text"]:hover, 
+        .login-container input[type="password"]:hover {
+            transform: scale(1.05); /* Slightly scale up on hover */
+            box-shadow: 0 0 15px #ff5733; /* Glow effect */
+        }
+
+        .login-container input[type="submit"] {
+            background-color: #ff5733;
+            color: rgb(255, 255, 255);
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease; /* Animation for background color */
+        }
+
+        .login-container input[type="submit"]:hover {
+            background-color: #e65c00;
+        }
+
+        .login-container a {
+            display: inline-block;
+            margin-top: 10px;
+            color: #ff5733;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .login-container a:hover {
+            text-decoration: underline;
+        }
+
+        .guest-button {
+            background-color: #ff5733; /* Orange color */
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Animation for background color */
+        }
+
+        .guest-button:hover {
+            background-color: #e65c00; /* Darker orange on hover */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="beacon-heading">BEACON</div>
+
+    <div class="login-container">
+        <h2>Admin Login</h2>
+        <form id="loginForm">
+            <input type="text" id="username" name="username" placeholder="Username" required>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <input type="submit" value="Login">
+            <a href="createaccount.html"><u>Create Account</u></a> <!-- Link to create account page -->
+            
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === "febin" && password === "12345") {
+                alert("Successfully logged in!");
+                window.location.href = "dashboardadmin.html"; // Redirect to the dashboard page
+            } else {
+                alert("Invalid username or password.");
+            }
+        });
+
+        document.getElementById('guestButton').addEventListener('click', function() {
+            window.location.href = "dashboard.html"; // Redirect to the dashboard page for guests
+        });
+    </script>
+
+</body>
+</html>
